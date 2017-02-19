@@ -19,28 +19,28 @@ func TestStringer(t *testing.T) {
 func TestPutable(t *testing.T) {
 	var board Board
 	board.initialize()
-	if board.IsPutable(Pos{8, 0}) {
-		t.Error(`board.IsPutable(Pos{8,0}) == false`)
+	if board.isPutable(Pos{8, 0}) {
+		t.Error(`board.isPutable(Pos{8,0}) == false`)
 	}
-	if board.IsPutable(Pos{0, 8}) {
-		t.Error(`board.IsPutable(Pos{0,8}) == false`)
+	if board.isPutable(Pos{0, 8}) {
+		t.Error(`board.isPutable(Pos{0,8}) == false`)
 	}
 
 	board.put(Pos{0, 0})
-	if board.IsPutable(Pos{0, 0}) {
-		t.Error(`board.IsPutable(Pos{0,0}) == true`)
+	if board.isPutable(Pos{0, 0}) {
+		t.Error(`board.isPutable(Pos{0,0}) == true`)
 	}
-	if board.IsPutable(Pos{1, 0}) {
-		t.Error(`board.IsPutable(Pos{1,0}) == true`)
+	if board.isPutable(Pos{1, 0}) {
+		t.Error(`board.isPutable(Pos{1,0}) == true`)
 	}
-	if board.IsPutable(Pos{0, 1}) {
-		t.Error(`board.IsPutable(Pos{0,1}) == true`)
+	if board.isPutable(Pos{0, 1}) {
+		t.Error(`board.isPutable(Pos{0,1}) == true`)
 	}
-	if !board.IsPutable(Pos{2, 1}) {
-		t.Error(`board.IsPutable(Pos{2,1}) == false`)
+	if !board.isPutable(Pos{2, 1}) {
+		t.Error(`board.isPutable(Pos{2,1}) == false`)
 	}
-	if !board.IsPutable(Pos{1, 2}) {
-		t.Error(`board.IsPutable(Pos{1,2}) == false`)
+	if !board.isPutable(Pos{1, 2}) {
+		t.Error(`board.isPutable(Pos{1,2}) == false`)
 	}
 }
 

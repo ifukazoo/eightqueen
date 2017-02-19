@@ -6,23 +6,29 @@ import (
 )
 
 const (
-	Empty   = iota
-	Piece   // 駒
-	Control // 利き
+	// Empty 空き
+	Empty = iota
+
+	// Piece 駒
+	Piece
+
+	// Control 利き
+	Control
 )
 
 const (
-	N = iota
-	NE
-	E
-	SE
-	S
-	SW
-	W
-	NW
+	north = iota
+	northeast
+	east
+	southeast
+	south
+	southwest
+	west
+	northwest
 	numOfDir
 )
 
+// Pos マスの座標を表す
 type Pos struct {
 	X int
 	Y int
@@ -33,6 +39,7 @@ func (o Pos) String() string {
 	return fmt.Sprintf("(%v,%v)", o.X, o.Y)
 }
 
+// Board 盤面表現
 type Board [8][8]int
 
 // Stringer
@@ -55,7 +62,7 @@ func (p *Board) String() string {
 	}
 	return buffer.String()
 }
-func (p *Board) PiecesPos() (poses []Pos) {
+func (p *Board) piecesPos() (poses []Pos) {
 	for x := 0; x < 8; x++ {
 		for y := 0; y < 8; y++ {
 			pos := Pos{x, y}
@@ -77,26 +84,26 @@ func (p *Board) initialize() {
 func (p *Board) inboard(pos Pos) bool {
 	return 0 <= pos.X && pos.X <= 7 && 0 <= pos.Y && pos.Y <= 7
 }
-func (p *Board) IsPutable(pos Pos) bool {
+func (p *Board) isPutable(pos Pos) bool {
 	return p.inboard(pos) && p[pos.Y][pos.X] == Empty
 }
 func getIncVal(dir int) (int, int) {
 	switch dir {
-	case N:
+	case north:
 		return 0, -1
-	case NE:
+	case northeast:
 		return 1, -1
-	case E:
+	case east:
 		return 1, 0
-	case SE:
+	case southeast:
 		return 1, 1
-	case S:
+	case south:
 		return 0, 1
-	case SW:
+	case southwest:
 		return -1, 1
-	case W:
+	case west:
 		return -1, 0
-	case NW:
+	case northwest:
 		return -1, -1
 	default:
 		// must not be reach
@@ -105,7 +112,7 @@ func getIncVal(dir int) (int, int) {
 }
 func (p *Board) put(center Pos) {
 	p[center.Y][center.X] = Piece
-	for d := N; d < numOfDir; d++ {
+	for d := north; d < numOfDir; d++ {
 		pos := center
 		incX, incY := getIncVal(d)
 		pos.X += incX
@@ -126,7 +133,7 @@ func solve() (complete []Board) {
 }
 func solveRecursive(board Board, currentY int, complete *[]Board) {
 	for x := 0; x < 8; x++ {
-		if board.IsPutable(Pos{x, currentY}) {
+		if board.isPutable(Pos{x, currentY}) {
 			copyBoad := board
 			copyBoad.put(Pos{x, currentY})
 			if currentY == 7 {
@@ -141,7 +148,7 @@ func solveRecursive(board Board, currentY int, complete *[]Board) {
 func main() {
 	complete := solve()
 	for _, board := range complete {
-		fmt.Println(board.PiecesPos())
+		fmt.Println(board.piecesPos())
 		fmt.Print(&board)
 		fmt.Println("###############")
 	}
