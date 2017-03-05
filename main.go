@@ -17,7 +17,7 @@ type Positions []Pos
 
 // 利き筋を作る
 func getControls(p Pos) Positions {
-	var controls Positions
+	controls := make(Positions, 0)
 	col := p.x - 1
 	for 0 <= col {
 		diff := p.x - col

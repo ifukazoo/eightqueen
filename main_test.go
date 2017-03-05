@@ -1,18 +1,9 @@
 package main
 
-import "testing"
-
-func eqslice(a, b Positions) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
+import (
+	"reflect"
+	"testing"
+)
 
 type testIsSafePosInput struct {
 	p         Pos
