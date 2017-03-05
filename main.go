@@ -1,175 +1,123 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
+	"os"
+	"strconv"
 )
 
-const (
-	// Empty 空き
-	Empty = iota
-
-	// Piece 駒
-	Piece
-
-	// Control Queenの利き
-	Control
-)
-
-// 方角
-const (
-	north = iota
-	northeast
-	east
-	southeast
-	south
-	southwest
-	west
-	northwest
-	numOfDir
-)
-
-// Pos マスの座標を表す
+// Pos 座標
 type Pos struct {
-	X int
-	Y int
+	x int
+	y int
 }
 
-const (
-	width  = 8
-	height = 8
-)
+// Positions 座標の集合
+type Positions []Pos
 
-// Board 盤面表現
-type Board [width][height]int
+// 利き筋を作る
+func getControls(p Pos) Positions {
+	var controls Positions
+	col := p.x - 1
+	for 0 <= col {
+		diff := p.x - col
+		controls = append(controls,
+			Pos{col, p.y},        // 西方向  のマス
+			Pos{col, p.y + diff}, // 南西方向のマス
+			Pos{col, p.y - diff}) // 北西方向のマス
+		col--
+	}
+	return controls
+}
 
-// 盤面の初期化
-func (p *Board) initialize() {
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			pos := Pos{x, y}
-			p[pos.Y][pos.X] = Empty
+func (q Positions) findPos(p Pos) bool {
+	for _, v := range q {
+		if v.x == p.x && v.y == p.y {
+			// found
+			return true
+		}
+	}
+	return false
+}
+func isSafePos(p Pos, positions Positions) bool {
+	// 利き筋を作る
+	controls := getControls(p)
+	// 利き筋にすでに置いているqueenがあるか?
+	for _, q := range positions {
+		if controls.findPos(q) {
+			return false
+		}
+	}
+	return true
+}
+
+func queensRecursive(boardSize, col int, positions Positions, result *[]Positions) {
+	if boardSize-1 < col { // col は 0 origin なので.
+		// complete!!
+		*result = append(*result, positions)
+	} else {
+		// 新しいqueenを1行ずつ試行.
+		for row := 0; row < boardSize; row++ {
+			newqueen := Pos{col, row}
+			copyPositions := make(Positions, len(positions))
+			copy(copyPositions, positions)
+			if isSafePos(newqueen, copyPositions) {
+				// 置けたら次の列へ
+				queensRecursive(boardSize, col+1, append(positions, newqueen), result)
+			}
 		}
 	}
 }
 
-// 盤面の範囲内か?
-func (p *Board) isInsidePos(pos Pos) bool {
-	return 0 <= pos.X && pos.X < width && 0 <= pos.Y && pos.Y < height
+func queens(boardSize int) []Positions {
+	var positions Positions
+	var result []Positions
+	queensRecursive(boardSize, 0, positions, &result)
+	return result
 }
-func (p *Board) canPut(pos Pos) bool {
-	return p.isInsidePos(pos) && p[pos.Y][pos.X] == Empty
-}
-
-func getIncrementNum(dir int) (int, int) {
-	incrementMap := map[int]struct{ x, y int }{
-		north:     {0, -1},
-		northeast: {1, -1},
-		east:      {1, 0},
-		southeast: {1, 1},
-		south:     {0, 1},
-		southwest: {-1, 1},
-		west:      {-1, 0},
-		northwest: {-1, -1},
-	}
-	val := incrementMap[dir]
-	return val.x, val.y
-}
-
-// 駒を置いて,利きを足す
-func (p *Board) putAndAddControl(here Pos) {
-	// その場に置く
-	p[here.Y][here.X] = Piece
-
-	// 8方位に展開する
-	for d := north; d < numOfDir; d++ {
-		pos := here
-		incX, incY := getIncrementNum(d)
-		pos.X += incX
-		pos.Y += incY
-
-		// 利きを伸ばす
-		for p.isInsidePos(pos) {
-			p[pos.Y][pos.X] = Control
-			pos.X += incX
-			pos.Y += incY
-		}
-	}
-}
-
-func solve() []Board {
-	var (
-		board     Board
-		completed []Board
-	)
-	board.initialize()
-	solveRecursive(board, 0, &completed)
-	return completed
-}
-func solveRecursive(board Board, y int, completed *[]Board) {
-	if y == width {
-		// もうこれ以上置けないので完成
-		*completed = append(*completed, board)
-		return
-	}
-	for x := 0; x < width; x++ {
-		if board.canPut(Pos{x, y}) {
-			copyBoad := board
-			copyBoad.putAndAddControl(Pos{x, y})
-			// 次の行を調べる
-			solveRecursive(copyBoad, y+1, completed)
-		}
-	}
-	return
-}
-
 func main() {
-	completed := solve()
-	for _, board := range completed {
-		fmt.Println(board.collectPosOfPiece())
-		fmt.Print(&board)
-		fmt.Println("###############")
+	var boardSize int
+	if len(os.Args) == 1 {
+		boardSize = 8
+	} else {
+		boardSize = eAtoi(os.Args[1])
 	}
-	fmt.Println(len(completed))
+	r := queens(boardSize)
+	for _, positions := range r {
+		fmt.Printf("%v\n", positions)
+		// printBoard(boardSize, positions)
+		// fmt.Printf("\n")
+	}
 }
 
-/*
- * 主にデバッグ用
- */
-// Stringer
-func (o Pos) String() string {
-	return fmt.Sprintf("(%v,%v)", o.X, o.Y)
+func eAtoi(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		os.Exit(1)
+	}
+	return i
 }
 
-// Stringer
-func (p *Board) String() string {
-	var buffer bytes.Buffer
-	for _, row := range p {
-		sep := ""
-		for _, v := range row {
-			buffer.WriteString(sep)
+func printBoard(boardSize int, positions Positions) {
+	board := make([][]bool, boardSize)
+	for i := 0; i < boardSize; i++ {
+		board[i] = make([]bool, boardSize)
+	}
+	for _, pos := range positions {
+		board[pos.y][pos.x] = true
+	}
+	var sep string
+	for row := 0; row < boardSize; row++ {
+		for col := 0; col < boardSize; col++ {
+			fmt.Printf(sep)
 			sep = " "
-			if v == Piece {
-				buffer.WriteString("o")
-			} else if v == Control {
-				buffer.WriteString("x")
+			if board[row][col] {
+				fmt.Printf("o")
 			} else {
-				buffer.WriteString("-")
+				fmt.Printf("-")
 			}
 		}
-		buffer.WriteString("\n")
+		fmt.Printf("\n")
+		sep = ""
 	}
-	return buffer.String()
-}
-
-func (p *Board) collectPosOfPiece() (poses []Pos) {
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			pos := Pos{x, y}
-			if p[pos.Y][pos.X] == Piece {
-				poses = append(poses, pos)
-			}
-		}
-	}
-	return
 }
